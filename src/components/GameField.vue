@@ -26,8 +26,7 @@
                           @click="handleStep([x, y], 'player')"
                           :color="btnColor(x, y)"
                           outlined
-                          height="100px"
-                          width="100px"
+                          class="field-cell"
                       >
                         <v-icon
                             v-if="x === position[0] && y === position[1]"
@@ -218,16 +217,21 @@ export default {
   margin: 0 !important;
 }
 
+.field-cell {
+  height: 80px !important;
+  width: 80px !important;
+}
+
 .barrier-right {
   background-color: #f5f5f5;
-  height: 100px;
+  height: 80px;
   width: 10px;
   border-radius: 1px;
 }
 
 .barrier-bottom {
   background-color: #f5f5f5;
-  width: 100px;
+  width: 80px;
   height: 10px;
   border-radius: 1px;
 }
