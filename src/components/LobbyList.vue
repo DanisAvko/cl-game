@@ -86,6 +86,7 @@ export default {
         {
           text: 'Действия',
           value: 'actions',
+          align: 'center',
           sortable: false
         }
       ]
