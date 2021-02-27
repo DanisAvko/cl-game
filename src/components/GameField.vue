@@ -31,13 +31,13 @@
                       >
                         <v-icon
                             v-if="x === position[0] && y === position[1]"
-                            key="horse" x-large
+                            key="player-1" x-large
                         >
                           {{ figures.player }}
                         </v-icon>
                         <v-icon
                             v-if="x === opponentPosition[0] && y === opponentPosition[1]"
-                            key="cow" x-large
+                            key="player-2" x-large
                         >
                           {{ figures.opponent }}
                         </v-icon>
@@ -163,10 +163,9 @@ export default {
   mounted() {
     this.socket.on('step', data => {
 
+      console.log('step', data)
       if (!this.move) this.opponentPosition = data.position
       else this.position = data.position
-
-      console.log('ccc', data)
 
       this.move = !this.move
     })
