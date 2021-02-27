@@ -44,25 +44,18 @@
                       </v-btn>
                     </v-col>
                     <v-col>
-                      <v-btn
+                      <div
                           v-if="y !== (fieldSize - 1)"
-                          height="100px"
-                          @click="addBarrier([x, y], 'right')"
-                          tile
-                          class="barrier-btn-right"
-                          :class="{'selected-barrier': barrierIsSelect([x, y], 'right')}"
+                          class="barrier-right v-btn--is-elevated"
+                          :class="{'selected-barrier': barrierIsSelect([[x, y], [x, y + 1]], 0)}"
                       />
                     </v-col>
                   </v-row>
                   <v-row no-gutters>
-                    <v-btn
+                    <div
                         v-if="x !== (fieldSize - 1)"
-                        @click="addBarrier([x, y], 'bottom')"
-                        class="barrier-btn-bottom"
-                        tile
-                        width="100px"
-                        style="float: bottom"
-                        :class="{'selected-barrier': barrierIsSelect([x, y], 'bottom')}"
+                        class="barrier-bottom v-btn--is-elevated"
+                        :class="{'selected-barrier': barrierIsSelect([[x, y], [x + 1, y]], 1)}"
                     />
                   </v-row>
                 </div>
@@ -91,7 +84,7 @@
 </template>
 
 <script>
-import {mapState} from 'vuex'
+import { mapState } from 'vuex'
 
 export default {
   name: "GameField",
@@ -108,7 +101,6 @@ export default {
       figures: {},
 
       barriers: [],
-      selectedBarriers: []
     }
   },
   computed: {
@@ -119,25 +111,15 @@ export default {
   },
   methods: {
     barrierIsSelect(position, type) {
-      return !!this.selectedBarriers.find(item =>
-          item.position[0] === position[0] && item.position[1] === position[1] && item.type === type
+      return !!this.barriers.find(item =>
+          item.type === type &&
+          item.position.find(pos => position[0][0] === pos[0] && position[0][1] === pos[1]) &&
+          item.position.find(pos => position[1][0] === pos[0] && position[1][1] === pos[1])
       )
-    },
-    addBarrier(position, type) {
-      let barrierInd = this.selectedBarriers.findIndex(item =>
-          item.position[0] === position[0] && item.position[1] === position[1] && item.type === type
-      )
-
-      if (barrierInd === -1) {
-        this.selectedBarriers.push({position, type})
-      } else {
-        this.selectedBarriers.splice(barrierInd, 1)
-      }
     },
     handleStep(position, type = 'barrier') {
       if (!this.move) return
       this.socket.emit('step', {position, type})
-      this.position = position
     },
     leaveLobby() {
       this.socket.emit('leaveLobby', {
@@ -152,7 +134,6 @@ export default {
       this.move = false
       this.figures = {}
       this.barriers = []
-      this.selectedBarriers = []
     },
 
     btnColor(x, y) {
@@ -161,7 +142,7 @@ export default {
     },
   },
   mounted() {
-    this.socket.on('step', data => {
+    this.socket.on('step', (data) => {
 
       console.log('step', data)
       if (!this.move) this.opponentPosition = data.position
@@ -171,15 +152,17 @@ export default {
     })
 
     this.socket.on('startGame', (params) => {
-      const {first, startPosition, opponentStartPosition} = params
-      this.move = first
+      console.log('startGame', params)
+      const { move, startPosition, opponentStartPosition, barriers } = params
+      this.move = move
       this.figures = {
         player: this.move ? 'mdi-horse-variant' : 'mdi-cow',
         opponent: !this.move ? 'mdi-horse-variant' : 'mdi-cow',
       }
 
-      this.position = [this.move ? 0 : this.fieldSize - 1, startPosition]
-      this.opponentPosition = [!this.move ? 0 : this.fieldSize - 1, opponentStartPosition]
+      this.position = startPosition
+      this.opponentPosition = opponentStartPosition
+      this.barriers = barriers
     })
   }
 }
@@ -190,16 +173,18 @@ export default {
   margin: 0 !important;
 }
 
-.barrier-btn-right {
-  min-width: 10px !important;
-  max-width: 10px !important;
-  padding: 0 !important;
+.barrier-right {
+  background-color: #f5f5f5;
+  height: 100px;
+  width: 10px;
+  border-radius: 1px;
 }
 
-.barrier-btn-bottom {
-  min-height: 10px !important;
-  max-height: 10px !important;
-  padding: 0 !important;
+.barrier-bottom {
+  background-color: #f5f5f5;
+  width: 100px;
+  height: 10px;
+  border-radius: 1px;
 }
 
 .selected-barrier {

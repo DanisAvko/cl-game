@@ -11,11 +11,14 @@
 <script>
 import LobbyList from "./components/LobbyList";
 import GameField from "@/components/GameField";
-import {mapState} from "vuex";
+import { mapState } from "vuex";
 
 export default {
   name: 'App',
-  components: {LobbyList, GameField},
+  components: {
+    LobbyList,
+    GameField
+  },
   computed: {
     ...mapState({
       selectedLobby: (state) => state.Common.selectedLobby
