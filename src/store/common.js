@@ -83,13 +83,10 @@ const actions = {
     initSocket({ commit }) {
         const socket = io(url)
 
-        socket.on('connected', (ttt) => {
-            console.log('socket', ttt); //
+        socket.on('connected', (msg) => {
+            console.log('socket', msg); //
         })
 
-        socket.on('message', (t)=> {
-            console.log('message', t)
-        })
         commit('SET_SOCKET', socket)
     }
 }
