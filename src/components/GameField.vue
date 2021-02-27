@@ -73,10 +73,27 @@
         </v-card>
       </v-col>
       <v-col cols="4">
-        <v-card height="100%">
+        <v-card>
           <v-card-title class="justify-center">
-            Статус игры
+            <span class="mr-1">История игры</span>
+            <v-btn @click="gameLogs = []" icon title="Очистить">
+              <v-icon>
+                mdi-broom
+              </v-icon>
+            </v-btn>
           </v-card-title>
+          <v-card-text style="height: 600px; max-height: 800px; overflow: auto">
+            <v-list>
+              <v-list-item v-for="(log, i) in gameLogs" :key="i" style="font-size: 16px">
+                <div v-if="log.key" class="font-weight-bold mr-1">
+                  {{ log.key + ': ' }}
+                </div>
+                <div :class="{'font-weight-bold': !log.key}">
+                  {{ log.text }}
+                </div>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -99,6 +116,8 @@ export default {
       opponentPosition: [],
       move: false,
       figures: {},
+
+      gameLogs: [],
 
       barriers: [],
     }
@@ -143,16 +162,42 @@ export default {
   },
   mounted() {
     this.socket.on('step', (data) => {
-
       console.log('step', data)
-      if (!this.move) this.opponentPosition = data.position
-      else this.position = data.position
 
+      const log = { text: `(${data.position[0] + 1}, ${data.position[1] + 1})` }
+      if (!this.move) {
+        this.opponentPosition = data.position
+        log.key = "Ход соперника"
+      }
+      else {
+        this.position = data.position
+        log.key = "Ваш ход"
+      }
+
+      this.gameLogs.push(log)
       this.move = !this.move
     })
 
     this.socket.on('startGame', (params) => {
       console.log('startGame', params)
+
+      this.gameLogs.push(
+          {
+            text: 'Игра началась'
+          },
+          {
+            key: 'Название лобби',
+            text: this.selectedLobby.lobbyName
+          },
+          {
+            key: 'Количество препятсвий игры',
+            text: this.selectedLobby.gameBarrierCount
+          },
+          {
+            key: 'Количество препятсвий игрока',
+            text: this.selectedLobby.playerBarrierCount
+          }
+      )
       const { move, startPosition, opponentStartPosition, barriers } = params
       this.move = move
       this.figures = {
