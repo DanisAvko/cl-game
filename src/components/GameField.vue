@@ -189,6 +189,10 @@ export default {
             text: this.selectedLobby.lobbyName
           },
           {
+            key: 'Размер поля',
+            text: `${this.selectedLobby.fieldSize} x ${this.selectedLobby.fieldSize}`
+          },
+          {
             key: 'Количество препятсвий игры',
             text: this.selectedLobby.gameBarrierCount
           },
