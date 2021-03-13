@@ -6,7 +6,9 @@
       </v-card-title>
       <v-card-text>
         <v-text-field v-model="name" label="Название" outlined/>
-        <v-text-field v-model.number="size" type="number" label="Размеры поля" outlined/>
+        <div>Размеры поля</div>
+        <v-text-field v-model.number="width" type="number" label="Ширина" outlined/>
+        <v-text-field v-model.number="height" type="number" label="Высота" outlined/>
         <v-text-field v-model.number="gameBarrierCount" type="number" label="Количество препятсвий игры" outlined/>
         <v-text-field v-model.number="playerBarrierCount" type="number" label="Количество препятсвий игрока" outlined/>
       </v-card-text>
@@ -42,7 +44,8 @@ export default {
   data() {
     return {
       name: '',
-      size: null,
+      width: null,
+      height: null,
       gameBarrierCount: null,
       playerBarrierCount: null,
 
@@ -63,10 +66,11 @@ export default {
     createLobby() {
       this.loading = true
       this.$store.dispatch('createLobby', {
-        fieldSize: this.size,
+        width: this.width,
+        height: this.height,
         gameBarrierCount: this.gameBarrierCount,
         playerBarrierCount: this.playerBarrierCount,
-        lobbyName: this.name,
+        name: this.name,
       }).finally(() => {
         this.loading = false
         this.show = false

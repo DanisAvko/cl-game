@@ -4,7 +4,7 @@
       <v-col cols="8">
         <v-card>
           <v-card-title class="justify-center">
-            Лобби: {{ selectedLobby ? selectedLobby.lobbyName : 'не выбрано' }}
+            Лобби: {{ selectedLobby ? selectedLobby.name : 'не выбрано' }}
             <v-btn
                 v-if="selectedLobby"
                 @click="leaveLobby()"
@@ -17,9 +17,9 @@
             </v-btn>
           </v-card-title>
           <v-card-text>
-            <template v-for="(_, x) in fieldSize">
+            <template v-for="(_, x) in height">
               <div class="d-flex flex-row justify-center" :key="'row-' + x">
-                <div v-for="(_, y) in fieldSize" :key="'col-' + y">
+                <div v-for="(_, y) in width" :key="'col-' + y">
                   <v-row no-gutters>
                     <v-col>
                       <v-btn
@@ -44,7 +44,7 @@
                     </v-col>
                     <v-col>
                       <div
-                          v-if="y !== (fieldSize - 1)"
+                          v-if="y !== (width - 1)"
                           class="barrier-right v-btn--is-elevated"
                           :class="{'selected-barrier': barrierIsSelect([[x, y], [x, y + 1]], 0)}"
                       />
@@ -52,7 +52,7 @@
                   </v-row>
                   <v-row no-gutters>
                     <div
-                        v-if="x !== (fieldSize - 1)"
+                        v-if="x !== (height - 1)"
                         class="barrier-bottom v-btn--is-elevated"
                         :class="{'selected-barrier': barrierIsSelect([[x, y], [x + 1, y]], 1)}"
                     />
@@ -105,7 +105,10 @@ import { mapState } from 'vuex'
 export default {
   name: "GameField",
   props: {
-    fieldSize: {
+    width: {
+      type: Number
+    },
+    height: {
       type: Number
     }
   },
@@ -124,7 +127,8 @@ export default {
   computed: {
     ...mapState({
       socket: (state) => state.Common.socket,
-      selectedLobby: (state) => state.Common.selectedLobby
+      selectedLobby: (state) => state.Common.selectedLobby,
+      clientName: (state) => state.Common.clientName
     }),
   },
   methods: {
@@ -182,15 +186,16 @@ export default {
 
       this.gameLogs.push(
           {
-            text: 'Игра началась'
+            key: 'Игра началась',
+            text: `${this.clientName} vs ${params.opponentName}`
           },
           {
             key: 'Название лобби',
-            text: this.selectedLobby.lobbyName
+            text: this.selectedLobby.name
           },
           {
             key: 'Размер поля',
-            text: `${this.selectedLobby.fieldSize} x ${this.selectedLobby.fieldSize}`
+            text: `${this.width} x ${this.height}`
           },
           {
             key: 'Количество препятсвий игры',

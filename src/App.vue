@@ -3,7 +3,7 @@
     <v-container>
       <LobbyList/>
       <v-divider/>
-      <GameField :field-size="fieldSize" class="mt-8"/>
+      <GameField :width="width" :height="height" class="mt-8"/>
     </v-container>
   </v-app>
 </template>
@@ -13,6 +13,7 @@ import LobbyList from "./components/LobbyList";
 import GameField from "@/components/GameField";
 import { mapState } from "vuex";
 
+
 export default {
   name: 'App',
   components: {
@@ -21,14 +22,23 @@ export default {
   },
   computed: {
     ...mapState({
-      selectedLobby: (state) => state.Common.selectedLobby
+      selectedLobby: (state) => state.Common.selectedLobby,
+      clientName: (state) => state.Common.clientName
     }),
-    fieldSize() {
-      return this.selectedLobby ? this.selectedLobby.fieldSize : 6
+    width() {
+      return this.selectedLobby ? this.selectedLobby.width : 6
+    },
+    height() {
+      return this.selectedLobby ? this.selectedLobby.height : 6
     }
   },
   created() {
-    this.$store.dispatch('initSocket')
+    const options = {
+      query: {
+        name: this.clientName
+      }
+    }
+    this.$store.dispatch('initSocket', options)
   }
 };
 </script>

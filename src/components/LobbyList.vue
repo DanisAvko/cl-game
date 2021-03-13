@@ -7,6 +7,9 @@
       :items-per-page="-1"
       :loading="loading"
   >
+    <template v-slot:item.fieldSize="{ item }">
+      {{item.width}} x {{item.height}}
+    </template>
     <template v-slot:item.playersCount="{ item }">
       {{item.playersCount}}/2
     </template>
@@ -61,11 +64,11 @@ export default {
       headers: [
         {
           text: 'Название',
-          value: 'lobbyName'
+          value: 'name'
         },
         {
           text: 'Размер поля',
-          value: 'fieldSize'
+          value: 'fieldSize',
         },
         {
           text: 'Кол-во препятсвий игры',
