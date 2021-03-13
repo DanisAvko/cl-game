@@ -18,6 +18,8 @@ const state = {
     selectedLobby: null,
 
     socket: null,
+
+    clientName: 'Mataninja'
 }
 
 const mutations = {
@@ -80,11 +82,11 @@ const actions = {
             return response
         })
     },
-    initSocket({ commit }) {
-        const socket = io(url)
+    initSocket({ commit }, { query }) {
+        const socket = io(url, { query })
 
-        socket.on('connected', (msg) => {
-            console.log('socket', msg); //
+        socket.on('connection', (data) => {
+            console.warn('socket.connection: ', data?.message); //
         })
 
         commit('SET_SOCKET', socket)
