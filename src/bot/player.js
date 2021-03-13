@@ -73,8 +73,8 @@ export default class Player {
         } else if (moveType == 2) {
             // соперник установил новое препятствие
             if (result.length === 2) {
-                this.obstacles.append(result[0])
-                this.obstacles.append(result[1])
+                this.obstacles.push(result[0])
+                this.obstacles.push(result[1])
             } else {
                 // этого быть не должно, ошибка!
                 print("Error, opponent returned wrong move!!")
