@@ -44,11 +44,9 @@ export default class Player {
     expandPlayer() {
         /* TODO: Возвращает список из набора координат (x, y), куда игрок может сделать ход из текущей позиции.
              Результат Может быть пустым. */
-        let allMoves = [[this.myX + 1, this.myY], [this.myX - 1, this.myY], [this.myX, this.myY + 1], [this.myX, this.myY - 1]]
-        let myMoves = allMoves.filter(move => {
-            return this.canPlayerMove(move[0], move[1])
-        })
-        return myMoves
+
+        const allMoves = [[this.myX + 1, this.myY], [this.myX - 1, this.myY], [this.myX, this.myY + 1], [this.myX, this.myY - 1]]
+        return allMoves.filter(move => this.canPlayerMove(move[0], move[1]))
     }
 
     expandObstacles() {
