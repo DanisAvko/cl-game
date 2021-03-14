@@ -8,13 +8,13 @@
       :loading="loading"
   >
     <template v-slot:item.fieldSize="{ item }">
-      {{item.width}} x {{item.height}}
+      {{ item.width }} x {{ item.height }}
     </template>
     <template v-slot:item.playersCount="{ item }">
-      {{item.playersCount}}/2
+      {{ item.playersCount }}/2
     </template>
     <template v-slot:item.status="{ item }">
-      {{item.playersCount === 2 ? 'В игре' : 'Ожидание'}}
+      {{ item.playersCount === 2 ? 'В игре' : 'Ожидание' }}
     </template>
     <template v-slot:item.actions="{ item }">
       <v-btn @click="joinLobby(item)" title="Присоединиться" :disabled="!!selectedLobby" icon>
@@ -34,6 +34,13 @@
         <v-divider class="mx-4" inset vertical/>
         <v-spacer/>
         <v-btn
+            @click="connectToRandomLobby()"
+            color="primary"
+            class="mr-2"
+        >
+          Присоединиться к случайному лобби
+        </v-btn>
+        <v-btn
             @click="showCreateLobbyDialog = true"
             color="primary"
         >
@@ -50,7 +57,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import {mapState} from 'vuex'
 
 export default {
   name: "LobbyList",
@@ -105,12 +112,18 @@ export default {
   methods: {
     joinLobby(item) {
       this.socket.emit('joinLobby', {
-        lobbyId: item._id
+        id: item._id
       })
     },
     deleteLobby(item) {
       this.$store.dispatch('deleteLobby', item)
     },
+    connectToRandomLobby() {
+      this.$store.dispatch('getRandomLobby')
+          .then(response => {
+            if (response) this.joinLobby(response)
+          })
+    }
   },
   mounted() {
     this.loading = true
@@ -130,11 +143,12 @@ export default {
     })
 
     this.socket.on('joinLobby', (lobby) => {
+      console.warn('joinLobby: ', lobby)
       this.$store.commit('SET_SELECTED_LOBBY', lobby)
     })
     this.socket.on('leaveLobby', (message) => {
       this.$store.commit('SET_SELECTED_LOBBY', null)
-      console.log('leaveLobbyMessage: ', message)
+      console.warn('leaveLobby: ', message)
     })
   }
 }

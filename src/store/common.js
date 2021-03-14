@@ -53,6 +53,13 @@ const mutations = {
 }
 
 const actions = {
+    getRandomLobby({ dispatch }) {
+        return dispatch('getRequest', {
+            method: 'randomlobby'
+        }).then((response) => {
+            return response
+        })
+    },
     getLobbyList({ dispatch, commit }) {
         return dispatch('getRequest', {
             method: 'lobby'
