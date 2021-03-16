@@ -23,7 +23,7 @@
                   <v-row no-gutters>
                     <v-col>
                       <v-btn
-                          @click="handleStep([x, y], 'player')"
+                          @click="handleStep([x, y])"
                           :color="btnColor(x, y)"
                           outlined
                           class="field-cell"
@@ -46,7 +46,7 @@
                       <div
                           v-if="y !== (width - 1)"
                           class="barrier-right v-btn--is-elevated"
-                          :class="{'selected-barrier': barrierIsSelect([[x, y], [x, y + 1]], 0)}"
+                          :class="{'selected-barrier': barrierIsSelect([x, y], [x, y + 1])}"
                       />
                     </v-col>
                   </v-row>
@@ -54,7 +54,7 @@
                     <div
                         v-if="x !== (height - 1)"
                         class="barrier-bottom v-btn--is-elevated"
-                        :class="{'selected-barrier': barrierIsSelect([[x, y], [x + 1, y]], 1)}"
+                        :class="{'selected-barrier': barrierIsSelect([x, y], [x + 1, y])}"
                     />
                   </v-row>
                 </div>
@@ -100,7 +100,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import {mapState} from 'vuex'
 
 export default {
   name: "GameField",
@@ -132,16 +132,31 @@ export default {
     }),
   },
   methods: {
-    barrierIsSelect(position, type) {
-      return !!this.barriers.find(item =>
-          item.type === type &&
-          item.position.find(pos => position[0][0] === pos[0] && position[0][1] === pos[1]) &&
-          item.position.find(pos => position[1][0] === pos[0] && position[1][1] === pos[1])
-      )
+    comparePoint(p1, p2) {
+      return p1[0] === p2[0] && p1[1] === p2[1]
     },
-    handleStep(position, type = 'barrier') {
+    barrierIsSelect(fromPoint, toPoint) {
+      return !!this.barriers.find(barrier => {
+        if (
+            (this.comparePoint(barrier[0], fromPoint) && this.comparePoint(barrier[1], toPoint)) ||
+            (this.comparePoint(barrier[0], toPoint) && this.comparePoint(barrier[1], fromPoint))
+        ) return true
+        else if (
+            (this.comparePoint(barrier[2], fromPoint) && this.comparePoint(barrier[3], toPoint)) ||
+            (this.comparePoint(barrier[2], toPoint) && this.comparePoint(barrier[3], fromPoint))
+        ) return true
+
+        return false
+      })
+    },
+    handleStep(position) {
       if (!this.move) return
-      this.socket.emit('step', {position, type})
+      this.socket.emit('step', {
+        position,
+        width: this.width,
+        height: this.height,
+        barriers: this.barriers,
+      })
     },
     leaveLobby() {
       this.socket.emit('leaveLobby', {
@@ -165,14 +180,13 @@ export default {
   },
   mounted() {
     this.socket.on('step', (data) => {
-      console.log('step', data)
+      console.warn('step: ', data)
 
-      const log = { text: `(${data.position[0] + 1}, ${data.position[1] + 1})` }
+      const log = {text: `(${data.position[0] + 1}, ${data.position[1] + 1})`}
       if (!this.move) {
         this.opponentPosition = data.position
         log.key = "Ход соперника"
-      }
-      else {
+      } else {
         this.position = data.position
         log.key = "Ваш ход"
       }
@@ -182,7 +196,7 @@ export default {
     })
 
     this.socket.on('startGame', (params) => {
-      console.log('startGame', params)
+      console.warn('startGame: ', params)
 
       this.gameLogs.push(
           {
@@ -206,16 +220,29 @@ export default {
             text: this.selectedLobby.playerBarrierCount
           }
       )
-      const { move, startPosition, opponentStartPosition, barriers } = params
+      const { move, position, opponentPosition, barriers } = params
       this.move = move
       this.figures = {
         player: this.move ? 'mdi-horse-variant' : 'mdi-cow',
         opponent: !this.move ? 'mdi-horse-variant' : 'mdi-cow',
       }
 
-      this.position = startPosition
-      this.opponentPosition = opponentStartPosition
+      this.position = position
+      this.opponentPosition = opponentPosition
       this.barriers = barriers
+    })
+
+    this.socket.on('endGame', data => {
+      console.warn('endGame: ', data)
+      this.gameLogs.push(
+          {
+            text: 'Конец игры',
+          },
+          {
+            key: 'Победитель',
+            text: data.winnerName
+          }
+      )
     })
   }
 }
