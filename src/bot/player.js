@@ -49,10 +49,30 @@ export default class Player {
         return allMoves.filter(move => this.canPlayerMove(move[0], move[1]))
     }
 
+    getTreeOfMoves(obstacle, x, y, positions) {
+        let pos = positions.slice().push([x, y])
+        if (x === (this.myGoalRow === 0 ? (this.sizeY - 1) : 0)) return true
+        let oppSteps = this.expandPlayer()
+        if (oppSteps.length === 0) return false
+        if (positions.length === 1 && oppSteps.length === 1) return false
+
+        oppSteps = oppSteps.filter(step => !!positions.some(position => step[0] !== position[0] && step[1] !== position[1]))
+        if (oppSteps.length === 0) return  false
+        return oppSteps.map(step => {
+            return this.getTreeOfMoves(obstacle, step[0], step[1], pos)
+        }).some(i => i)
+    }
+
     expandObstacles() {
         /* TODO: Возвращает список из наборов (o1,o2) всех возможных вариантов установки препятствий.
             Результат может быть пустым. */
         let myObstacles = []
+        let allObstacles = []
+        allObstacles.forEach(obstacle => {
+            if (this.getTreeOfMoves(obstacle, this.opponentX, this.opponentY, [])) {
+                myObstacles.push(obstacle)
+            }
+        })
         return myObstacles
     }
 
