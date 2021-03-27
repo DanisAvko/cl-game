@@ -244,6 +244,10 @@ export default {
           }
       )
     })
+    this.socket.on('randomLobby', data => {
+      console.warn('randomLobby', data)
+    })
+    this.socket.emit('randomLobby')
   }
 }
 </script>
