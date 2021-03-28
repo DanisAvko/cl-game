@@ -1,3 +1,5 @@
+import Obstacle from "@/bot/obstacle";
+
 export default class Player {
     constructor(name) {
         this.name = name
@@ -25,7 +27,7 @@ export default class Player {
         this.obstacles = listOfObstacles
         this.myObstacles = 0
 
-        this.myGoalRow = this.myY === 0 ? sizeY - 1 : 0
+        this.myGoalRow = this.myX === 0 ? sizeY - 1 : 0
     }
 
     isInBoard(x, y) {
@@ -35,7 +37,7 @@ export default class Player {
 
     canPlayerMove(x, y) {
         // TODO: возвращает True, если игрок может сделать ход из (this.myX, this.myY) на клетку (x, y)
-        return (this.myX !== x && this.myY !== y) &&
+        return (this.myX !== x || this.myY !== y) &&
             this.isInBoard(x, y) &&
             ((Math.abs(this.myX - x) === 1 && this.myY === y) || (Math.abs(this.myY - y) === 1 && this.myX === x)) &&
             this.obstacles.every(obstacle => obstacle.canPlayerMove(this.myX, this.myY, x, y))
@@ -49,18 +51,25 @@ export default class Player {
         return allMoves.filter(move => this.canPlayerMove(move[0], move[1]))
     }
 
-    getTreeOfMoves(obstacle, x, y, positions) {
-        let pos = positions.slice().push([x, y])
-        if (x === (this.myGoalRow === 0 ? (this.sizeY - 1) : 0)) return true
-        let oppSteps = this.expandPlayer()
-        if (oppSteps.length === 0) return false
-        if (positions.length === 1 && oppSteps.length === 1) return false
+    getEndPlayerSteps(obstacle, goalRow, myX, myY, opponentX, opponentY) {
+        let positions = []
+        const player = new Player('opponent')
+        let oppObst = [...this.obstacles, ...obstacle]
+        player.initialization(this.sizeX, this.sizeY, myX, myY, opponentX, opponentY,  this.maxObstacles, oppObst)
+        let steps = player.expandPlayer()
+        while (steps.length !== 0 && !steps.find(step => step[0] === goalRow)) {
+            let tmpOppSteps = []
+            steps.filter(step => !positions.some(position => step[0] === position[0] && step[1] === position[1])).forEach(step => {
+                let tmp = new Player('opponent')
+                tmp.initialization(this.sizeX, this.sizeY, step[0], step[1], opponentX, opponentY, this.maxObstacles, oppObst)
+                positions.push(step)
+                tmpOppSteps.push(...tmp.expandPlayer())
+            })
 
-        oppSteps = oppSteps.filter(step => !!positions.some(position => step[0] !== position[0] && step[1] !== position[1]))
-        if (oppSteps.length === 0) return  false
-        return oppSteps.map(step => {
-            return this.getTreeOfMoves(obstacle, step[0], step[1], pos)
-        }).some(i => i)
+            steps = tmpOppSteps
+        }
+
+        return steps
     }
 
     expandObstacles() {
@@ -68,11 +77,27 @@ export default class Player {
             Результат может быть пустым. */
         let myObstacles = []
         let allObstacles = []
-        allObstacles.forEach(obstacle => {
-            if (this.getTreeOfMoves(obstacle, this.opponentX, this.opponentY, [])) {
-                myObstacles.push(obstacle)
+        for (let x = 0; x <=  (this.sizeX - 2); x++) {
+            for (let y = 0;  y <= (this.sizeY - 2); y++) {
+                const currObstV = [new Obstacle(x, y, x + 1, y), new Obstacle(x, y + 1, x + 1, y + 1)]
+                const currObstG = [new Obstacle(x, y, x, y + 1), new Obstacle(x + 1, y, x + 1, y + 1)]
+
+                if (this.obstacles.every(obstacle =>  !currObstV[0].isEqual(obstacle) && !currObstV[1].isEqual(obstacle))) {
+                    allObstacles.push(currObstV)
+                }
+                if (this.obstacles.every(obstacle =>  !currObstG[0].isEqual(obstacle) && !currObstG[1].isEqual(obstacle))) {
+                    allObstacles.push(currObstG)
+                }
             }
+        }
+
+        let oppGoalRow = this.myGoalRow === 0 ? (this.sizeY - 1) : 0
+        allObstacles.forEach(obstacle => {
+            let oppSteps = this.getEndPlayerSteps(obstacle, oppGoalRow, this.opponentX, this.opponentY, this.myX, this.myY)
+            let mySteps = this.getEndPlayerSteps(obstacle, this.myGoalRow, this.myX, this.myY, this.opponentX, this.opponentY)
+            if (oppSteps.find(step => step[0] === oppGoalRow) && mySteps.find(step => step[0] === this.myGoalRow)) myObstacles.push(obstacle)
         })
+
         return myObstacles
     }
 

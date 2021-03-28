@@ -101,6 +101,8 @@
 
 <script>
 import {mapState} from 'vuex'
+import Obstacle from "@/bot/obstacle";
+import Player from "@/bot/player";
 
 export default {
   name: "GameField",
@@ -122,6 +124,8 @@ export default {
       gameLogs: [],
 
       barriers: [],
+      classPlayer: null,
+      classBarriers: []
     }
   },
   computed: {
@@ -157,6 +161,7 @@ export default {
         height: this.height,
         barriers: this.barriers,
       })
+      console.warn('obs: ', this.classPlayer.expandObstacles())
     },
     leaveLobby() {
       this.socket.emit('leaveLobby', {
@@ -220,7 +225,20 @@ export default {
             text: this.selectedLobby.playerBarrierCount
           }
       )
-      const { move, position, opponentPosition, barriers } = params
+      const { move, position, opponentPosition, barriers, height, width } = params
+
+      this.classBarriers = []
+      barriers.forEach(barrier => {
+        this.classBarriers.push(new Obstacle(barrier[0][0], barrier[0][1], barrier[1][0], barrier[1][1]))
+        this.classBarriers.push(new Obstacle(barrier[2][0], barrier[2][1], barrier[3][0], barrier[3][1]))
+      })
+      const player = new Player('1093')
+      player.initialization(
+          width, height,
+          position[0], position[1], opponentPosition[0],
+          opponentPosition[1], 3, this.classBarriers
+      )
+      this.classPlayer = player
       this.move = move
       this.figures = {
         player: this.move ? 'mdi-horse-variant' : 'mdi-cow',
