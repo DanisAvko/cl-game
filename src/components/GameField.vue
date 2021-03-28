@@ -116,16 +116,13 @@ export default {
   },
   data() {
     return {
-      position: [],
-      opponentPosition: [],
       move: false,
       figures: {},
 
       gameLogs: [],
 
       barriers: [],
-      classPlayer: null,
-      classBarriers: []
+      player: null
     }
   },
   computed: {
@@ -134,6 +131,12 @@ export default {
       selectedLobby: (state) => state.Common.selectedLobby,
       clientName: (state) => state.Common.clientName
     }),
+    position() {
+      return this.player ? [this.player.myX, this.player.myY] : []
+    },
+    opponentPosition() {
+      return this.player ? [this.player.opponentX, this.player.opponentY] : []
+    }
   },
   methods: {
     comparePoint(p1, p2) {
@@ -161,7 +164,7 @@ export default {
         height: this.height,
         barriers: this.barriers,
       })
-      console.warn('obs: ', this.classPlayer.expandObstacles())
+
     },
     leaveLobby() {
       this.socket.emit('leaveLobby', {
@@ -171,17 +174,22 @@ export default {
     },
 
     resetGame() {
-      this.position = []
-      this.opponentPosition = []
+      this.player = null
+
       this.move = false
       this.figures = {}
-      this.barriers = []
     },
 
     btnColor(x, y) {
       return (x === this.position[0] && y === this.position[1] && 'green') ||
           (x === this.opponentPosition[0] && y === this.opponentPosition[1] && 'red') || ''
     },
+
+    handleMove() {
+      const expand = this.player.expandPlayer()
+      const random = Math.floor(Math.random() * (expand.length))
+      return expand[random]
+    }
   },
   mounted() {
     this.socket.on('step', (data) => {
@@ -189,15 +197,24 @@ export default {
 
       const log = {text: `(${data.position[0] + 1}, ${data.position[1] + 1})`}
       if (!this.move) {
-        this.opponentPosition = data.position
+        this.$set(this.player, 'opponentX', data.position[0])
+        this.$set(this.player, 'opponentY', data.position[1])
+        this.move = !this.move
+
+        setTimeout(() => {
+          this.handleStep(this.handleMove())
+        }, 1000)
+
         log.key = "Ход соперника"
       } else {
-        this.position = data.position
+        this.$set(this.player, 'myX', data.position[0])
+        this.$set(this.player, 'myY', data.position[1])
+        this.move = !this.move
+
         log.key = "Ваш ход"
       }
 
       this.gameLogs.push(log)
-      this.move = !this.move
     })
 
     this.socket.on('startGame', (params) => {
@@ -227,27 +244,31 @@ export default {
       )
       const { move, position, opponentPosition, barriers, height, width } = params
 
-      this.classBarriers = []
+      const tmpBarriers = []
       barriers.forEach(barrier => {
-        this.classBarriers.push(new Obstacle(barrier[0][0], barrier[0][1], barrier[1][0], barrier[1][1]))
-        this.classBarriers.push(new Obstacle(barrier[2][0], barrier[2][1], barrier[3][0], barrier[3][1]))
+        tmpBarriers.push(new Obstacle(barrier[0][0], barrier[0][1], barrier[1][0], barrier[1][1]))
+        tmpBarriers.push(new Obstacle(barrier[2][0], barrier[2][1], barrier[3][0], barrier[3][1]))
       })
       const player = new Player('1093')
       player.initialization(
           width, height,
           position[0], position[1], opponentPosition[0],
-          opponentPosition[1], 3, this.classBarriers
+          opponentPosition[1], 3, tmpBarriers
       )
-      this.classPlayer = player
+      this.player = player
       this.move = move
       this.figures = {
         player: this.move ? 'mdi-horse-variant' : 'mdi-cow',
         opponent: !this.move ? 'mdi-horse-variant' : 'mdi-cow',
       }
 
-      this.position = position
-      this.opponentPosition = opponentPosition
       this.barriers = barriers
+
+      if (this.move) {
+        setTimeout(() => {
+          this.handleStep(this.handleMove())
+        }, 3000)
+      }
     })
 
     this.socket.on('endGame', data => {
