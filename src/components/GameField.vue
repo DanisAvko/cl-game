@@ -178,6 +178,7 @@ export default {
 
       this.move = false
       this.figures = {}
+      this.barriers = []
     },
 
     btnColor(x, y) {
@@ -251,7 +252,7 @@ export default {
       })
       const player = new Player('1093')
       player.initialization(
-          width, height,
+          height, width,
           position[0], position[1], opponentPosition[0],
           opponentPosition[1], 3, tmpBarriers
       )
