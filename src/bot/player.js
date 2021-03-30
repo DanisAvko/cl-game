@@ -40,7 +40,8 @@ export default class Player {
         return (this.myX !== x || this.myY !== y) &&
             this.isInBoard(x, y) &&
             ((Math.abs(this.myX - x) === 1 && this.myY === y) || (Math.abs(this.myY - y) === 1 && this.myX === x)) &&
-            this.obstacles.every(obstacle => obstacle.canPlayerMove(this.myX, this.myY, x, y))
+            this.obstacles.every(obstacle => obstacle.canPlayerMove(this.myX, this.myY, x, y)) &&
+            (this.opponentX !== x || this.opponentY !== y)
     }
 
     expandPlayer() {
@@ -51,22 +52,22 @@ export default class Player {
         return allMoves.filter(move => this.canPlayerMove(move[0], move[1]))
     }
 
-    getEndPlayerSteps(obstacle, goalRow, myX, myY, opponentX, opponentY) {
-        let positions = []
-        const player = new Player('opponent')
-        let oppObst = [...this.obstacles, ...obstacle]
-        player.initialization(this.sizeX, this.sizeY, myX, myY, opponentX, opponentY,  this.maxObstacles, oppObst)
+    getEndPlayerSteps(obstacle, goalRow, myX, myY) {
+        const positions = []
+        const player = new Player('')
+        const obst = [...this.obstacles, ...obstacle]
+        player.initialization(this.sizeX, this.sizeY, myX, myY, -1, -1, this.maxObstacles, obst)
         let steps = player.expandPlayer()
         while (steps.length !== 0 && !steps.find(step => step[0] === goalRow)) {
-            let tmpOppSteps = []
+            let tmpSteps = []
             steps.filter(step => !positions.some(position => step[0] === position[0] && step[1] === position[1])).forEach(step => {
-                let tmp = new Player('opponent')
-                tmp.initialization(this.sizeX, this.sizeY, step[0], step[1], opponentX, opponentY, this.maxObstacles, oppObst)
+                player.myX = step[0]
+                player.myY = step[1]
                 positions.push(step)
-                tmpOppSteps.push(...tmp.expandPlayer())
+                tmpSteps.push(...player.expandPlayer())
             })
 
-            steps = tmpOppSteps
+            steps = tmpSteps
         }
 
         return steps
@@ -77,15 +78,15 @@ export default class Player {
             Результат может быть пустым. */
         let myObstacles = []
         let allObstacles = []
-        for (let x = 0; x <=  (this.sizeX - 2); x++) {
-            for (let y = 0;  y <= (this.sizeY - 2); y++) {
+        for (let x = 0; x <= (this.sizeX - 2); x++) {
+            for (let y = 0; y <= (this.sizeY - 2); y++) {
                 const currObstV = [new Obstacle(x, y, x + 1, y), new Obstacle(x, y + 1, x + 1, y + 1)]
                 const currObstG = [new Obstacle(x, y, x, y + 1), new Obstacle(x + 1, y, x + 1, y + 1)]
 
-                if (this.obstacles.every(obstacle =>  !currObstV[0].isEqual(obstacle) && !currObstV[1].isEqual(obstacle))) {
+                if (this.obstacles.every(obstacle => !currObstV[0].isEqual(obstacle) && !currObstV[1].isEqual(obstacle))) {
                     allObstacles.push(currObstV)
                 }
-                if (this.obstacles.every(obstacle =>  !currObstG[0].isEqual(obstacle) && !currObstG[1].isEqual(obstacle))) {
+                if (this.obstacles.every(obstacle => !currObstG[0].isEqual(obstacle) && !currObstG[1].isEqual(obstacle))) {
                     allObstacles.push(currObstG)
                 }
             }
@@ -93,8 +94,8 @@ export default class Player {
 
         let oppGoalRow = this.myGoalRow === 0 ? (this.sizeY - 1) : 0
         allObstacles.forEach(obstacle => {
-            let oppSteps = this.getEndPlayerSteps(obstacle, oppGoalRow, this.opponentX, this.opponentY, this.myX, this.myY)
-            let mySteps = this.getEndPlayerSteps(obstacle, this.myGoalRow, this.myX, this.myY, this.opponentX, this.opponentY)
+            let oppSteps = this.getEndPlayerSteps(obstacle, oppGoalRow, this.myX, this.myY)
+            let mySteps = this.getEndPlayerSteps(obstacle, this.myGoalRow, this.opponentX, this.opponentY)
             if (oppSteps.find(step => step[0] === oppGoalRow) && mySteps.find(step => step[0] === this.myGoalRow)) myObstacles.push(obstacle)
         })
 
