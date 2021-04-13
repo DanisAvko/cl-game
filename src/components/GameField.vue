@@ -156,14 +156,30 @@ export default {
         return false
       })
     },
-    handleStep(position) {
+    handleStep({data, type}) {
       if (!this.move) return
-      this.socket.emit('step', {
-        position,
-        width: this.width,
-        height: this.height,
-        barriers: this.barriers,
-      })
+      if (type === 'player') {
+        this.socket.emit('step', {
+          position: data,
+          width: this.width,
+          height: this.height,
+          barriers: this.barriers,
+        })
+      } else {
+        let tnp = [...this.barriers,[
+          [data[0].fromX, data[0].fromY],
+          [data[0].toX, data[0].toY],
+          [data[1].fromX, data[1].fromY],
+          [data[1].toX, data[1].toY],
+        ]]
+        this.socket.emit('step', {
+          position: [this.player.myX, this.player.myY],
+          width: this.width,
+          height: this.height,
+          barriers: tnp,
+        })
+      }
+
 
     },
     leaveLobby() {
@@ -186,10 +202,55 @@ export default {
           (x === this.opponentPosition[0] && y === this.opponentPosition[1] && 'red') || ''
     },
 
-    handleMove() {
+    alg1() {
+      const expand = this.player.expandPlayer()
+      if (this.figures.player !== 'mdi-cow') {
+        let step = null
+        step = expand.find(move => move[0] === this.player.myX + 1 && move[1] === this.player.myY)
+        if (step) return step
+        step = expand.find(move => move[0] === this.player.myX && move[1] === this.player.myY + 1)
+        if (step) return step
+        step = expand.find(move => move[0] === this.player.myX && move[1] === this.player.myY - 1)
+        if (step) return step
+        step = expand.find(move => move[0] === this.player.myX - 1 && move[1] === this.player.myY)
+        if (step) return step
+        return [this.player.myX, this.player.myY]
+      } else {
+        let step = null
+        step = expand.find(move => move[0] === this.player.myX - 1 && move[1] === this.player.myY)
+        if (step) return step
+        step = expand.find(move => move[0] === this.player.myX && move[1] === this.player.myY + 1)
+        if (step) return step
+        step = expand.find(move => move[0] === this.player.myX && move[1] === this.player.myY - 1)
+        if (step) return step
+        step = expand.find(move => move[0] === this.player.myX + 1 && move[1] === this.player.myY)
+        if (step) return step
+        return [this.player.myX, this.player.myY]
+      }
+    },
+
+    alg2() {
       const expand = this.player.expandPlayer()
       const random = Math.floor(Math.random() * (expand.length))
-      return expand[random]
+      const obst = this.player.expandObstacles()
+
+      if (this.player.myObstacles !== this.player.maxObstacles && obst.length !== 0) {
+        const random2 = Math.floor(Math.random() * (obst.length))
+        this.player.myObstacles++
+        return {
+          type: 'obst',
+          data: obst[random2]
+        }
+      }
+
+      return {
+        type: 'player',
+        data: expand.length === 0 ? [this.player.myX, this.player.myY] : expand[random]
+      }
+    },
+
+    handleMove() {
+      return this.alg2()
     }
   },
   mounted() {
@@ -198,20 +259,32 @@ export default {
 
       const log = {text: `(${data.position[0] + 1}, ${data.position[1] + 1})`}
       if (!this.move) {
+        this.barriers = data.barriers
         this.$set(this.player, 'opponentX', data.position[0])
         this.$set(this.player, 'opponentY', data.position[1])
         this.move = !this.move
-
+        const tmpBarriers = []
+        data.barriers.forEach(barrier => {
+          tmpBarriers.push(new Obstacle(barrier[0][0], barrier[0][1], barrier[1][0], barrier[1][1]))
+          tmpBarriers.push(new Obstacle(barrier[2][0], barrier[2][1], barrier[3][0], barrier[3][1]))
+        })
+        this.$set(this.player, 'obstacles', tmpBarriers)
         setTimeout(() => {
           this.handleStep(this.handleMove())
         }, 1000)
 
         log.key = "Ход соперника"
       } else {
+        this.barriers = data.barriers
         this.$set(this.player, 'myX', data.position[0])
         this.$set(this.player, 'myY', data.position[1])
         this.move = !this.move
-
+        const tmpBarriers = []
+        data.barriers.forEach(barrier => {
+          tmpBarriers.push(new Obstacle(barrier[0][0], barrier[0][1], barrier[1][0], barrier[1][1]))
+          tmpBarriers.push(new Obstacle(barrier[2][0], barrier[2][1], barrier[3][0], barrier[3][1]))
+        })
+        this.$set(this.player, 'obstacles', tmpBarriers)
         log.key = "Ваш ход"
       }
 
@@ -243,7 +316,7 @@ export default {
             text: this.selectedLobby.playerBarrierCount
           }
       )
-      const { move, position, opponentPosition, barriers, height, width } = params
+      const { move, position, opponentPosition, barriers, height, width, playerBarrierCount } = params
 
       const tmpBarriers = []
       barriers.forEach(barrier => {
@@ -254,7 +327,7 @@ export default {
       player.initialization(
           height, width,
           position[0], position[1], opponentPosition[0],
-          opponentPosition[1], 3, tmpBarriers
+          opponentPosition[1], playerBarrierCount, tmpBarriers
       )
       this.player = player
       this.move = move

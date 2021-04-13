@@ -27,7 +27,7 @@ export default class Player {
         this.obstacles = listOfObstacles
         this.myObstacles = 0
 
-        this.myGoalRow = this.myX === 0 ? sizeY - 1 : 0
+        this.myGoalRow = this.myX === 0 ? sizeX - 1 : 0
     }
 
     isInBoard(x, y) {
@@ -52,17 +52,44 @@ export default class Player {
         return allMoves.filter(move => this.canPlayerMove(move[0], move[1]))
     }
 
-    getEndPlayerSteps(obstacle, goalRow, myX, myY) {
-        const positions = []
+    returnWays(player, ways, steps) {
+        const currWay = ways.find(way => way[way.length - 1][0] === player.myX && way[way.length - 1][1] === player.myY)
+        const tmpWays = []
+        steps.forEach((step) => {
+            tmpWays.push([...currWay, step])
+        })
+        const currWayInd = ways.find(way => way[way.length - 1][0] === player.myX && way[way.length - 1][1] === player.myY)
+        ways.splice(currWayInd, 1)
+        return [...ways, ...tmpWays]
+    }z
+
+    getEndPlayerSteps(obstacle, goalRow = this.myGoalRow, myX = this.myX, myY = this.myY) {
+        const positions = [myX, myY]
         const player = new Player('')
         const obst = [...this.obstacles, ...obstacle]
         player.initialization(this.sizeX, this.sizeY, myX, myY, -1, -1, this.maxObstacles, obst)
         let steps = player.expandPlayer()
+        let ways = [
+            [
+                [myX, myY]
+            ]
+        ]
+
+        ways = this.returnWays(player, ways, steps)
+
         while (steps.length !== 0 && !steps.find(step => step[0] === goalRow)) {
-            let tmpSteps = []
-            steps.filter(step => !positions.some(position => step[0] === position[0] && step[1] === position[1])).forEach(step => {
+            const tmpSteps = []
+            const tmp = steps.filter(step => !positions.some(position => step[0] === position[0] && step[1] === position[1]))
+            const sortSteps = []
+            tmp.forEach(t => {
+                if (!sortSteps.find(s => s[0] === t[0] && s[1] === t[1])) {
+                    sortSteps.push(t)
+                }
+            })
+            sortSteps.forEach(step => {
                 player.myX = step[0]
                 player.myY = step[1]
+                ways = this.returnWays(player, ways, player.expandPlayer())
                 positions.push(step)
                 tmpSteps.push(...player.expandPlayer())
             })
@@ -92,10 +119,10 @@ export default class Player {
             }
         }
 
-        let oppGoalRow = this.myGoalRow === 0 ? (this.sizeY - 1) : 0
+        let oppGoalRow = this.myGoalRow === 0 ? (this.sizeX - 1) : 0
         allObstacles.forEach(obstacle => {
-            let oppSteps = this.getEndPlayerSteps(obstacle, oppGoalRow, this.myX, this.myY)
-            let mySteps = this.getEndPlayerSteps(obstacle, this.myGoalRow, this.opponentX, this.opponentY)
+            let oppSteps = this.getEndPlayerSteps(obstacle, oppGoalRow, this.opponentX, this.opponentY)
+            let mySteps = this.getEndPlayerSteps(obstacle, this.myGoalRow,  this.myX, this.myY)
             if (oppSteps.find(step => step[0] === oppGoalRow) && mySteps.find(step => step[0] === this.myGoalRow)) myObstacles.push(obstacle)
         })
 
