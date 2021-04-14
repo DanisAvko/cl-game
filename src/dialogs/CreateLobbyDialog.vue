@@ -9,8 +9,8 @@
         <div>Размеры поля</div>
         <v-text-field v-model.number="width" type="number" label="Ширина" outlined/>
         <v-text-field v-model.number="height" type="number" label="Высота" outlined/>
-        <v-text-field v-model.number="gameBarrierCount" type="number" label="Количество препятсвий игры" outlined/>
-        <v-text-field v-model.number="playerBarrierCount" type="number" label="Количество препятсвий игрока" outlined/>
+        <v-text-field v-model.number="gameBarrierCount" type="number" label="Количество препятствий игры" outlined/>
+        <v-text-field v-model.number="playerBarrierCount" type="number" label="Количество препятствий игрока" outlined/>
       </v-card-text>
       <v-card-actions>
         <v-spacer/>
