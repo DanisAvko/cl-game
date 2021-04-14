@@ -249,8 +249,44 @@ export default {
       }
     },
 
+    alg3() {
+      let myStep = this.player.getEndPlayerSteps(-1,this.player.myGoalRow,  this.player.myX, this.player.myY)
+      const expand = this.player.expandPlayer()
+      const random = Math.floor(Math.random() * (expand.length))
+      const allObst = this.player.expandObstacles()
+
+      let oppGoalRow = this.player.myGoalRow === 0 ? (this.player.sizeX - 1) : 0
+      let oppStep = this.player.getEndPlayerSteps(-1,oppGoalRow,  this.player.opponentX, this.player.opponentY)
+      let obst = allObst.filter(item => {
+        return !!item.find((i)=> {
+          return (i.fromX === oppStep[0][0] &&
+              i.fromY === oppStep[0][1] &&
+              i.toX === oppStep[1][0] &&
+              i.toY === oppStep[1][1]) ||
+              (i.toX === oppStep[0][0] &&
+                  i.toY === oppStep[0][1] &&
+                  i.fromX === oppStep[1][0] &&
+                  i.fromY === oppStep[1][1])
+        })
+      })
+
+      if (this.player.myObstacles !== this.player.maxObstacles && obst.length !== 0 && oppStep.length < myStep.length) {
+        const random2 = Math.floor(Math.random() * (obst.length))
+        this.player.myObstacles++
+        return {
+          type: 'obst',
+          data: obst[random2]
+        }
+      }
+
+      return {
+        type: 'player',
+        data: myStep.length !== 0 && this.player.canPlayerMove(myStep[1][0], myStep[1][1]) ? myStep[1] : expand.length !== 0 ? expand[random] : [this.player.myX, this.player.myY]
+      }
+    },
+
     handleMove() {
-      return this.alg2()
+      return this.alg3()
     }
   },
   mounted() {
@@ -308,11 +344,11 @@ export default {
             text: `${this.width} x ${this.height}`
           },
           {
-            key: 'Количество препятсвий игры',
+            key: 'Количество препятствий игры',
             text: this.selectedLobby.gameBarrierCount
           },
           {
-            key: 'Количество препятсвий игрока',
+            key: 'Количество препятствий игрока',
             text: this.selectedLobby.playerBarrierCount
           }
       )

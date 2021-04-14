@@ -78,11 +78,11 @@ export default {
           value: 'fieldSize',
         },
         {
-          text: 'Кол-во препятсвий игры',
+          text: 'Кол-во препятствий игры',
           value: 'gameBarrierCount'
         },
         {
-          text: 'Кол-во препятсвий игрока',
+          text: 'Кол-во препятствий игрока',
           value: 'playerBarrierCount'
         },
         {

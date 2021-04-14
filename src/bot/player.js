@@ -61,12 +61,12 @@ export default class Player {
         const currWayInd = ways.find(way => way[way.length - 1][0] === player.myX && way[way.length - 1][1] === player.myY)
         ways.splice(currWayInd, 1)
         return [...ways, ...tmpWays]
-    }z
+    }
 
     getEndPlayerSteps(obstacle, goalRow = this.myGoalRow, myX = this.myX, myY = this.myY) {
         const positions = [myX, myY]
         const player = new Player('')
-        const obst = [...this.obstacles, ...obstacle]
+        const obst = obstacle ===-1 ? this.obstacles :  [...this.obstacles, ...obstacle]
         player.initialization(this.sizeX, this.sizeY, myX, myY, -1, -1, this.maxObstacles, obst)
         let steps = player.expandPlayer()
         let ways = [
@@ -96,8 +96,15 @@ export default class Player {
 
             steps = tmpSteps
         }
-
-        return steps
+        //return steps
+        let filteredWays = ways.filter(item => {
+            return item[item.length - 1][0] === goalRow
+        })
+        let step = filteredWays[0]
+        for (let i = 0; i < filteredWays.length; i++) {
+            if (step > filteredWays[i]) step = filteredWays[i];
+        }
+        return step
     }
 
     expandObstacles() {
@@ -123,33 +130,9 @@ export default class Player {
         allObstacles.forEach(obstacle => {
             let oppSteps = this.getEndPlayerSteps(obstacle, oppGoalRow, this.opponentX, this.opponentY)
             let mySteps = this.getEndPlayerSteps(obstacle, this.myGoalRow,  this.myX, this.myY)
-            if (oppSteps.find(step => step[0] === oppGoalRow) && mySteps.find(step => step[0] === this.myGoalRow)) myObstacles.push(obstacle)
+            if (oppSteps && oppSteps.find(step => step[0] === oppGoalRow) && mySteps &&  mySteps.find(step => step[0] === this.myGoalRow)) myObstacles.push(obstacle)
         })
 
         return myObstacles
-    }
-
-    // opponentMove(moveType, result) {
-    //     if (moveType == 1) {
-    //         //соперник передвинул фишку, обновляем информацию о координатах
-    //         this.opponentX = result[0]
-    //         this.opponentY = result[1]
-    //     } else if (moveType == 2) {
-    //         // соперник установил новое препятствие
-    //         if (result.length === 2) {
-    //             this.obstacles.push(result[0])
-    //             this.obstacles.push(result[1])
-    //         } else {
-    //             // этого быть не должно, ошибка!
-    //             print("Error, opponent returned wrong move!!")
-    //         }
-    //     } else {
-    //         //Соперник пропустил ход
-    //         print("Opponent return None")
-    //     }
-    // }
-
-    makeMove() {
-
     }
 }
